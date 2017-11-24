@@ -7,6 +7,8 @@ https://docs.djangoproject.com/en/dev/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/dev/ref/settings/
 """
+
+import os
 import environ
 
 ROOT_DIR = environ.Path(__file__) - 3  # (tenkobo/config/settings/base.py - 3 = tenkobo/)
@@ -37,6 +39,7 @@ DJANGO_APPS = [
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
 
     # Useful template tags:
     # 'django.contrib.humanize',
@@ -49,6 +52,17 @@ THIRD_PARTY_APPS = [
     'allauth',  # registration
     'allauth.account',  # registration
     'allauth.socialaccount',  # registration
+    'mptt', # django-mptt
+    'versatileimagefield',
+    'rest_framework',
+    'rest_framework_gis',
+    'rest_framework_docs', # for api documentation
+    'rest_framework_swagger', # for api documentation
+    'django_prices',
+    'django_prices_openexchangerates',
+    'django_filters',
+    "geoposition",
+    'drf_extra_fields',
 ]
 
 # Apps specific for this project go here.
@@ -56,6 +70,7 @@ LOCAL_APPS = [
     # custom users app
     'tenkobo.users.apps.UsersConfig',
     # Your stuff: custom apps go here
+    'tenkobo.fsinfoservice.apps.FsinfoserviceConfig',
 ]
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -122,7 +137,7 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'Lagos/Nigeria'
+TIME_ZONE = 'UTC'
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = 'en-us'
@@ -285,3 +300,23 @@ ADMIN_URL = r'^admin/'
 
 # Your common stuff: Below this line define 3rd party library settings
 # ------------------------------------------------------------------------------
+# REST_FRAMEWORK = {
+#     # Use Django's standard `django.contrib.auth` permissions,
+#     # or allow read-only access for unauthenticated users.
+    
+# }
+
+REST_FRAMEWORK_DOCS = {
+    'HIDE_DOCS': False
+}
+
+
+DEFAULT_COUNTRY = 'US'
+DEFAULT_CURRENCY = 'USD'
+AVAILABLE_CURRENCIES = [DEFAULT_CURRENCY]
+
+OPENEXCHANGERATES_API_KEY = os.environ.get('OPENEXCHANGERATES_API_KEY')
+
+
+# Google API KEy
+GEOPOSITION_GOOGLE_MAPS_API_KEY = 'AIzaSyDdDJPA4KUu7r24vmqyG6fBbJIIaMWTZZY'
