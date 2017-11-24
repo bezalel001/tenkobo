@@ -20,12 +20,15 @@ class Location(gis_models.Model):
     street = gis_models.CharField(max_length=255)
     city = gis_models.CharField(max_length=100)
     state = gis_models.CharField(max_length=100)
-    point = gis_models.PointField()
+    point = gis_models.PointField(null=True, spatial_index=True, geography=True)
 
-    def get_lon_lat(self):
+    def get_lat_lng(self):
     	geojson = self.point.json
     	coordinates = json.loads(geojson).get('coordinates')
     	return [coordinates[1], coordinates[0]]
+
+    def get_point(self):
+    	return '{0}, {1}, {2}'.format(self.street, self.city, self.state)
 
     def save(self, *args, **kwargs):
         goecoded = geocoder.google(self)

@@ -1,8 +1,7 @@
 from rest_framework import generics
 from rest_framework.response import Response 
 from rest_framework.reverse import reverse
-
-
+from rest_framework_gis.filters import DistanceToPointFilter
 
 from .models import FuelStation, Category, Product, Location
 from .serializers import FuelStationSerializer, CategorySerializer, ProductSerializer
@@ -22,6 +21,9 @@ class ApiRoot(generics.GenericAPIView):
 class FuelStationList(generics.ListCreateAPIView):
 	queryset = FuelStation.objects.all()
 	serializer_class = FuelStationSerializer
+	distance_filter_field = 'geometry'
+	filter_backends = (DistanceToPointFilter, )
+	bbox_filter_include_overlapping = True # Optional
 	name = 'fuelstation-list'
 
 

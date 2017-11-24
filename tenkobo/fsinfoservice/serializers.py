@@ -1,9 +1,28 @@
-from django.contrib.gis.geos import Point
+import geocoder
+import json
 
 from rest_framework import serializers
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
+from django.contrib.gis.geos import Point, GEOSGeometry
+from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometrySerializerMethodField
 
 from .models import Location, FuelStation, Category, Product
+
+class LocationSerializer(GeoFeatureModelSerializer):
+    """ A class to serialize locations as GeoJSON compatible data """
+    point = GeometrySerializerMethodField()
+
+    def get_point(self, obj):
+    	return Point(obj.point[0], obj.point[1])
+
+    class Meta:
+        model = Location
+        geo_field = "point"
+
+        fields = ('id', 'street', 'city', 'state')
+
+    # def get_point(self, obj):
+    # 	g = geocoder.google(obj)
+    # 	return g.latlng
 
 
 class FuelStationSerializer(serializers.HyperlinkedModelSerializer):
@@ -11,14 +30,23 @@ class FuelStationSerializer(serializers.HyperlinkedModelSerializer):
 		many=True,
 		read_only=True,
 		view_name='product-detail')
+	location = LocationSerializer(required=True)
 
 	class Meta:
 		model = FuelStation
 		fields = (
 			'url', 'pk', 'name', 'description', 
-			'products', 'location', 'position',
-			'is_operational', 'is_featured', 'is_open', 
-			'hidden', 'updated_at')
+			'products', 'location', 'is_operational', 
+			'is_featured', 'is_open', 'updated_at', 'hidden')
+
+
+
+	def create(self, validated_data):
+		location_data = validated_data.pop('location')
+		location = Location.objects.create(**location_data)		
+		return FuelStation.objects.create(
+			location=location, 
+			**validated_data)
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
@@ -52,13 +80,3 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
 
 
-class LocationSerializer(GeoFeatureModelSerializer):
-    """ A class to serialize locations as GeoJSON compatible data """
-
-    class Meta:
-        model = Location
-        geo_field = "point"
-
-        # you can also explicitly declare which fields you want to include
-        # as with a ModelSerializer.
-        fields = ('id', 'street', 'city', 'state')
