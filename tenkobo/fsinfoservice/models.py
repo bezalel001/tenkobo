@@ -1,6 +1,8 @@
 import datetime
-import geocoder, json
+import geocoder
+import json
 from decimal import Decimal
+from geomet import wkt
 
 from django.conf import settings
 from django.db import models
@@ -27,14 +29,23 @@ class Location(gis_models.Model):
     	coordinates = json.loads(geojson).get('coordinates')
     	return [coordinates[1], coordinates[0]]
 
+    def set_point(self, address):
+    	try:
+    		geocoded = geocoder.google(address)
+    	except ObjectDoesNotExist:
+    		self.point = wkt.dumps(geocoder.google('67 Admiralty Way, Lekki Phase 1, Lagos').geometry, decimals=4)
+    	else:
+    		self.point = wkt.dumps(geocoded.geometry, decimals=4)
+    		
+    	
+
+    @property
     def get_point(self):
-    	return '{0}, {1}, {2}'.format(self.street, self.city, self.state)
+    	return self.point
 
     def save(self, *args, **kwargs):
-        goecoded = geocoder.google(self)
-        self.point = GEOSGeometry(json.dumps(goecoded.geometry))
-        super(Location, self).save(*args, **kwargs)
-
+    	self.set_point(self)
+    	super(Location, self).save(*args, **kwargs)
 
     def __str__(self):
     	return '{0}, {1}, {2}'.format(self.street, self.city, self.state)
@@ -56,9 +67,9 @@ class FuelStation(models.Model):
 	hidden = models.BooleanField(_('Fuel station field', 'hidden'), default=False)
 	is_operational = models.BooleanField(_('Fuel station field', 'is operational'), default=False)
 	is_featured = models.BooleanField(_('Fuel station field', 'is featured'), default=False)
-	is_open = models.BooleanField(_('Fuel station field', 'is featured'), default=False)
+	is_open = models.BooleanField(_('Fuel station field', 'is open'), default=False)
 	updated_at = models.DateTimeField(_('Fuel station field', 'updated at'), auto_now=True, null=True)
-	location = models.OneToOneField(Location)
+	location = models.OneToOneField(Location, related_name='fuel_station', on_delete=models.CASCADE, unique=True)
 	position = GeopositionField()
 
 
@@ -130,7 +141,7 @@ class OpeningHours(models.Model):
 		(7, _('Sunday', 'sunday')),
 	]
 	store = models.ForeignKey(
-	FuelStation, related_name='opening_hours'
+	FuelStation, related_name='opening_hours', on_delete=models.CASCADE
 	)
 	weekday = models.IntegerField(
 	choices=WEEKDAYS,

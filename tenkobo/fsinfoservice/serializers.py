@@ -9,20 +9,17 @@ from .models import Location, FuelStation, Category, Product
 
 class LocationSerializer(GeoFeatureModelSerializer):
     """ A class to serialize locations as GeoJSON compatible data """
+
     point = GeometrySerializerMethodField()
 
     def get_point(self, obj):
-    	return Point(obj.point[0], obj.point[1])
-
+    	return obj.get_point
+    
     class Meta:
         model = Location
         geo_field = "point"
-
         fields = ('id', 'street', 'city', 'state')
 
-    # def get_point(self, obj):
-    # 	g = geocoder.google(obj)
-    # 	return g.latlng
 
 
 class FuelStationSerializer(serializers.HyperlinkedModelSerializer):
@@ -48,6 +45,23 @@ class FuelStationSerializer(serializers.HyperlinkedModelSerializer):
 			location=location, 
 			**validated_data)
 
+	def update(self, instance, validated_data):
+		location_data = validated_data.pop('location')
+		location = instance.location
+		instance.name = validated_data.get('name', instance.name)
+		instance.description = validated_data.get('description', instance.description)
+		instance.is_featured = validated_data.get('is_featured', instance.is_featured)
+		instance.is_operational = validated_data.get('is_operational', instance.is_operational)
+		instance.is_open = validated_data.get('is_open', instance.is_open)
+		instance.save()
+		location.street = location_data.get('street', location.street)
+		location.city = location_data.get('city', location.city)
+		location.state = location_data.get('state', location.state)
+		location.point = location_data.get('point', location.point)
+		location.save()
+
+		return instance
+		
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
 	products = serializers.HyperlinkedRelatedField(
